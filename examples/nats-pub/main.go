@@ -74,7 +74,8 @@ func main() {
 	if reply != nil && *reply != "" {
 		nc.PublishRequest(subj, *reply, msg)
 	} else {
-		nc.Publish(subj, msg)
+		err := nc.Publish(subj, msg)
+		log.Print(err)
 	}
 
 	nc.Flush()

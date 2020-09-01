@@ -1685,22 +1685,21 @@ func (nc *Conn) processConnectInit() error {
 	defer nc.conn.SetDeadline(time.Time{})
 	// Set our status to connecting.
 	nc.status = CONNECTING
-	// Process the INFO protocol received from the server  if sctp pass
-	// todo: sctp don't check protocol
-	//err := nc.processExpectedInfo()
-	//if err != nil {
-	//	return err
-	//}
 
 	// Send the CONNECT protocol along with the initial PING protocol.
 	// Wait for the PONG response (or any error that we get from the server).
-	// todo: sctp don't need reconnect
-	//err := nc.sendConnect()
-	//if err != nil {
-	//	return err
-	//}
+	// todo: sctp base udp connect before
+	err := nc.sendConnect()
+	if err != nil {
+		return err
+	}
 
-	nc.status = CONNECTED
+	// Process the INFO protocol received from the server  if sctp pass
+	// todo: sctp base udp INFO message behind
+	err = nc.processExpectedInfo()
+	if err != nil {
+		return err
+	}
 
 	// Reset the number of PING sent out
 	nc.pout = 0
@@ -1738,7 +1737,6 @@ func (nc *Conn) connect() error {
 
 		//if err := nc.createConn(); err == nil {
 		if err := nc.createSctpConn(); err == nil {
-		//if err := nc.createSctpInnerConn(); err == nil {
 			// This was moved out of processConnectInit() because
 			// that function is now invoked from doReconnect() too.
 
@@ -1968,48 +1966,48 @@ func (nc *Conn) sendConnect() error {
 	// we would need to transfer the excess read data to the readLoop.
 	// Since in normal situations we just are looking for a PONG\r\n,
 	// reading byte-by-byte here is ok.
-	proto, err := nc.readProto()
-	if err != nil {
-		return err
-	}
+	//proto, err := nc.readProto()
+	//if err != nil {
+	//	return err
+	//}
 
 	// If opts.Verbose is set, handle +OK
-	if nc.Opts.Verbose && proto == okProto {
-		// Read the rest now...
-		proto, err = nc.readProto()
-		if err != nil {
-			return err
-		}
-	}
+	//if nc.Opts.Verbose && proto == okProto {
+	//	// Read the rest now...
+	//	proto, err = nc.readProto()
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 
 	// We expect a PONG
-	if proto != pongProto {
-		// But it could be something else, like -ERR
-
-		// Since we no longer use ReadLine(), trim the trailing "\r\n"
-		proto = strings.TrimRight(proto, "\r\n")
-
-		// If it's a server error...
-		if strings.HasPrefix(proto, _ERR_OP_) {
-			// Remove -ERR, trim spaces and quotes, and convert to lower case.
-			proto = normalizeErr(proto)
-
-			// Check if this is an auth error
-			if authErr := checkAuthError(strings.ToLower(proto)); authErr != nil {
-				// This will schedule an async error if we are in reconnect,
-				// and keep track of the auth error for the current server.
-				// If we have got the same error twice, this sets nc.ar to true to
-				// indicate that the reconnect should be aborted (will be checked
-				// in doReconnect()).
-				nc.processAuthError(authErr)
-			}
-
-			return errors.New("nats: " + proto)
-		}
-
-		// Notify that we got an unexpected protocol.
-		return fmt.Errorf("nats: expected '%s', got '%s'", _PONG_OP_, proto)
-	}
+	//if proto != pongProto {
+	//	// But it could be something else, like -ERR
+	//
+	//	// Since we no longer use ReadLine(), trim the trailing "\r\n"
+	//	proto = strings.TrimRight(proto, "\r\n")
+	//
+	//	// If it's a server error...
+	//	if strings.HasPrefix(proto, _ERR_OP_) {
+	//		// Remove -ERR, trim spaces and quotes, and convert to lower case.
+	//		proto = normalizeErr(proto)
+	//
+	//		// Check if this is an auth error
+	//		if authErr := checkAuthError(strings.ToLower(proto)); authErr != nil {
+	//			// This will schedule an async error if we are in reconnect,
+	//			// and keep track of the auth error for the current server.
+	//			// If we have got the same error twice, this sets nc.ar to true to
+	//			// indicate that the reconnect should be aborted (will be checked
+	//			// in doReconnect()).
+	//			nc.processAuthError(authErr)
+	//		}
+	//
+	//		return errors.New("nats: " + proto)
+	//	}
+	//
+	//	// Notify that we got an unexpected protocol.
+	//	return fmt.Errorf("nats: expected '%s', got '%s'", _PONG_OP_, proto)
+	//}
 
 	// This is where we are truly connected.
 	nc.status = CONNECTED
@@ -2434,7 +2432,6 @@ func (nc *Conn) waitForMsgs(s *Subscription) {
 			s.pBytes -= msgLen
 			msgLen = -1
 		}
-
 		if s.pHead == nil && !s.closed {
 			s.pCond.Wait()
 		}
