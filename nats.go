@@ -1428,7 +1428,6 @@ func (nc *Conn) createConn() (err error) {
 	return nil
 }
 
-
 func (nc *Conn) createSctpConn() (err error) {
 	if nc.Opts.Timeout < 0 {
 		return ErrBadTimeout
@@ -1477,8 +1476,9 @@ func (nc *Conn) createSctpConn() (err error) {
 			hosts[i], hosts[j] = hosts[j], hosts[i]
 		})
 	}
+	CustomDialer := sctp.NewDialer(true, sctp.ReliabilityTypeReliable, 0)
 	for _, host := range hosts {
-		nc.conn, err = sctp.Dial("udp", &host, 0)
+		nc.conn, err = CustomDialer.Dial("udp", &host, 0)
 		if err == nil {
 			break
 		}
@@ -1494,7 +1494,6 @@ func (nc *Conn) createSctpConn() (err error) {
 	nc.bw = nc.newBuffer()
 	return nil
 }
-
 
 // makeTLSConn will wrap an existing Conn using TLS
 func (nc *Conn) makeTLSConn() error {
@@ -1938,9 +1937,8 @@ func (nc *Conn) sendConnect() error {
 	return nil
 }
 
-
 func getIndex(arr []byte, item byte) int {
-	for i := 0; i < len(arr) ; i++ {
+	for i := 0; i < len(arr); i++ {
 		if arr[i] == item {
 			return i
 		}
@@ -1967,7 +1965,7 @@ func (nc *Conn) readProto() (string, error) {
 		buf = b[:]
 		index := getIndex(buf, protoEnd)
 		if index != -1 {
-			newBuf := buf[:index + 1]
+			newBuf := buf[:index+1]
 			return string(newBuf), nil
 		}
 		//if b[0] == protoEnd {
@@ -1975,8 +1973,6 @@ func (nc *Conn) readProto() (string, error) {
 		//}
 	}
 }
-
-
 
 // A control protocol line.
 type control struct {

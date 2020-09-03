@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	count := 100
+	count := 10
 	client := 1
 	urls := nats.DefaultURL
 	subj := "foo"
@@ -20,7 +20,7 @@ func main() {
 	defer nc.Close()
 	i := 0
 	for i < count {
-		msg :=	[]byte(time.Now().String())
+		msg := []byte(time.Now().String())
 		err := nc.Publish(subj, msg)
 		if err != nil {
 			log.Printf("[%v] Error %v", client, err)
@@ -37,7 +37,6 @@ func main() {
 	log.Printf("%v times message has been sent", count)
 }
 
-
 func newSubDo() {
 	urls := nats.DefaultURL
 	// Connect Options.
@@ -52,7 +51,7 @@ func newSubDo() {
 
 	subj := "foo"
 	i := 0
-	_ , _ = nc.Subscribe(subj, func(msg *nats.Msg) {
+	_, _ = nc.Subscribe(subj, func(msg *nats.Msg) {
 		i += 1
 		printMsg(msg, i)
 	})
@@ -68,7 +67,6 @@ func newSubDo() {
 func printMsg(m *nats.Msg, i int) {
 	log.Printf("[#%d] Received on [%s]: '%s'", i, m.Subject, string(m.Data))
 }
-
 
 func setupConnOptions(opts []nats.Option) []nats.Option {
 	totalWait := 10 * time.Minute
