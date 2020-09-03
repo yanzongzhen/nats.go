@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/nats-io/nats.go/sctp"
+	"github.com/yanzongzhen/sctp"
 	"io"
 	"io/ioutil"
 	"log"
