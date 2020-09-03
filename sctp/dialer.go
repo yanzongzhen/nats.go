@@ -8,9 +8,11 @@ import (
 
 // Dial connects to the given network address and establishes a
 // SCTP stream on top. For more control use DialAssociation.
-func Dial(network string, raddr *net.UDPAddr, streamIdentifier uint16) (net.Conn, error) {
+func Dial(network string, raddr *net.UDPAddr, streamIdentifier uint16) (*Stream, error) {
 	var d Dialer
-	return d.Dial(network, raddr, streamIdentifier)
+	d.PayloadType = PayloadTypeWebRTCBinary
+	s, e := d.Dial(network, raddr, streamIdentifier)
+	return s, e
 }
 
 // A Dialer contains options for connecting to an address.
@@ -30,16 +32,15 @@ type Dialer struct {
 
 // Dial connects to the given network address and establishes a
 // SCTP stream on top. The net.Conn in the config is ignored.
-func (d *Dialer) Dial(network string, raddr *net.UDPAddr, streamIdentifier uint16) (net.Conn, error) {
+func (d *Dialer) Dial(network string, raddr *net.UDPAddr, streamIdentifier uint16) (*Stream, error) {
 	if d.Config == nil {
 		d.Config = &Config{
 			LoggerFactory: logging.NewDefaultLoggerFactory(),
 		}
 	}
 	a, err := DialAssociation(network, raddr, *d.Config)
-
 	if err != nil {
 		return nil, err
 	}
-	return a.OpenStream(streamIdentifier, d.PayloadType)
+	return a.OpenStream(streamIdentifier, PayloadTypeWebRTCBinary)
 }

@@ -1170,6 +1170,7 @@ const (
 	connectProto = "CONNECT %s" + _CRLF_
 	pingProto    = "PING" + _CRLF_
 	pongProto    = "PONG" + _CRLF_
+	fetchProto   = "FETCH" + _CRLF_
 	subProto     = "SUB %s %s %d" + _CRLF_
 	unsubProto   = "UNSUB %d %s" + _CRLF_
 	okProto      = _OK_OP_ + _CRLF_
@@ -1445,7 +1446,6 @@ func (nc *Conn) createSctpConn() (err error) {
 		for _, addr := range addrs {
 			for _, i := range strings.Split(addr, ",") {
 				if a, err := net.ResolveUDPAddr("udp", i); err == nil {
-					log.Printf("Resolved address '%s' to %s", u, a)
 					hosts = append(hosts, *a)
 				} else {
 					log.Printf("Error resolving address '%s': %v", u, err)
@@ -1456,7 +1456,6 @@ func (nc *Conn) createSctpConn() (err error) {
 	// Fall back to what we were given.
 	if len(hosts) == 0 {
 		if a, err := net.ResolveUDPAddr("udp", u.Host); err == nil {
-			log.Printf("Resolved address '%s' to %s", u, a)
 			hosts = append(hosts, *a)
 		} else {
 			log.Printf("Error resolving address '%s': %v", u, err)
@@ -1479,8 +1478,6 @@ func (nc *Conn) createSctpConn() (err error) {
 		})
 	}
 	for _, host := range hosts {
-		//nc.conn, err = sctpinner.DialSCTP("sctp", nil, host)
-		//nc.conn, err = dialer.Dial("udp", host.String())
 		nc.conn, err = sctp.Dial("udp", &host, 0)
 		if err == nil {
 			break
@@ -1664,6 +1661,12 @@ func (nc *Conn) ConnectedServerId() string {
 	return nc.info.ID
 }
 
+// try match sctp protocol
+func (nc *Conn) sendConnectInit() error {
+	_, err := nc.conn.Write([]byte(pingProto))
+	return err
+}
+
 // Low level setup for structs, etc
 func (nc *Conn) setup() {
 	nc.subs = make(map[int64]*Subscription)
@@ -1679,6 +1682,8 @@ func (nc *Conn) setup() {
 
 // Process a connected connection and initialize properly.
 func (nc *Conn) processConnectInit() error {
+	// to send connect
+	_ = nc.sendConnectInit()
 
 	// Set our deadline for the whole connect process
 	_ = nc.conn.SetDeadline(time.Now().Add(nc.Opts.Timeout))
@@ -1686,17 +1691,15 @@ func (nc *Conn) processConnectInit() error {
 	// Set our status to connecting.
 	nc.status = CONNECTING
 
-	// Send the CONNECT protocol along with the initial PING protocol.
-	// Wait for the PONG response (or any error that we get from the server).
-	// todo: sctp base udp connect before
-	err := nc.sendConnect()
+	// Process the INFO protocol received from the server
+	err := nc.processExpectedInfo()
 	if err != nil {
 		return err
 	}
 
-	// Process the INFO protocol received from the server  if sctp pass
-	// todo: sctp base udp INFO message behind
-	err = nc.processExpectedInfo()
+	// Send the CONNECT protocol along with the initial PING protocol.
+	// Wait for the PONG response (or any error that we get from the server).
+	err = nc.sendConnect()
 	if err != nil {
 		return err
 	}
@@ -1707,7 +1710,7 @@ func (nc *Conn) processConnectInit() error {
 	// Start or reset Timer
 	if nc.Opts.PingInterval > 0 {
 		if nc.ptmr == nil {
-			nc.ptmr = time.AfterFunc(nc.Opts.PingInterval, nc.processPingTimer)
+			//nc.ptmr = time.AfterFunc(nc.Opts.PingInterval, nc.processPingTimer)
 		} else {
 			nc.ptmr.Reset(nc.Opts.PingInterval)
 		}
@@ -1966,48 +1969,48 @@ func (nc *Conn) sendConnect() error {
 	// we would need to transfer the excess read data to the readLoop.
 	// Since in normal situations we just are looking for a PONG\r\n,
 	// reading byte-by-byte here is ok.
-	//proto, err := nc.readProto()
-	//if err != nil {
-	//	return err
-	//}
+	proto, err := nc.readProto()
+	if err != nil {
+		return err
+	}
 
 	// If opts.Verbose is set, handle +OK
-	//if nc.Opts.Verbose && proto == okProto {
-	//	// Read the rest now...
-	//	proto, err = nc.readProto()
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
+	if nc.Opts.Verbose && proto == okProto {
+		// Read the rest now...
+		proto, err = nc.readProto()
+		if err != nil {
+			return err
+		}
+	}
 
 	// We expect a PONG
-	//if proto != pongProto {
-	//	// But it could be something else, like -ERR
-	//
-	//	// Since we no longer use ReadLine(), trim the trailing "\r\n"
-	//	proto = strings.TrimRight(proto, "\r\n")
-	//
-	//	// If it's a server error...
-	//	if strings.HasPrefix(proto, _ERR_OP_) {
-	//		// Remove -ERR, trim spaces and quotes, and convert to lower case.
-	//		proto = normalizeErr(proto)
-	//
-	//		// Check if this is an auth error
-	//		if authErr := checkAuthError(strings.ToLower(proto)); authErr != nil {
-	//			// This will schedule an async error if we are in reconnect,
-	//			// and keep track of the auth error for the current server.
-	//			// If we have got the same error twice, this sets nc.ar to true to
-	//			// indicate that the reconnect should be aborted (will be checked
-	//			// in doReconnect()).
-	//			nc.processAuthError(authErr)
-	//		}
-	//
-	//		return errors.New("nats: " + proto)
-	//	}
-	//
-	//	// Notify that we got an unexpected protocol.
-	//	return fmt.Errorf("nats: expected '%s', got '%s'", _PONG_OP_, proto)
-	//}
+	if proto != pongProto {
+		// But it could be something else, like -ERR
+
+		// Since we no longer use ReadLine(), trim the trailing "\r\n"
+		proto = strings.TrimRight(proto, "\r\n")
+
+		// If it's a server error...
+		if strings.HasPrefix(proto, _ERR_OP_) {
+			// Remove -ERR, trim spaces and quotes, and convert to lower case.
+			proto = normalizeErr(proto)
+
+			// Check if this is an auth error
+			if authErr := checkAuthError(strings.ToLower(proto)); authErr != nil {
+				// This will schedule an async error if we are in reconnect,
+				// and keep track of the auth error for the current server.
+				// If we have got the same error twice, this sets nc.ar to true to
+				// indicate that the reconnect should be aborted (will be checked
+				// in doReconnect()).
+				nc.processAuthError(authErr)
+			}
+
+			return errors.New("nats: " + proto)
+		}
+
+		// Notify that we got an unexpected protocol.
+		return fmt.Errorf("nats: expected '%s', got '%s'", _PONG_OP_, proto)
+	}
 
 	// This is where we are truly connected.
 	nc.status = CONNECTED
@@ -2015,28 +2018,45 @@ func (nc *Conn) sendConnect() error {
 	return nil
 }
 
+
+func getIndex(arr []byte, item byte) int {
+	for i := 0; i < len(arr) ; i++ {
+		if arr[i] == item {
+			return i
+		}
+	}
+	return -1
+}
+
 // reads a protocol one byte at a time.
 func (nc *Conn) readProto() (string, error) {
 	var (
 		_buf     = [10]byte{}
 		buf      = _buf[:0]
-		b        = [1]byte{}
+		b        = [defaultBufSize]byte{}
 		protoEnd = byte('\n')
 	)
 	for {
-		if _, err := nc.conn.Read(b[:1]); err != nil {
-			// Do not report EOF error
+		if _, err := nc.conn.Read(b[:defaultBufSize]); err != nil {
 			if err == io.EOF {
 				return string(buf), nil
 			}
 			return "", err
 		}
-		buf = append(buf, b[0])
-		if b[0] == protoEnd {
-			return string(buf), nil
+		//buf = append(buf, b[0])
+		buf = b[:]
+		index := getIndex(buf, protoEnd)
+		if index != -1 {
+			newBuf := buf[:index + 1]
+			return string(newBuf), nil
 		}
+		//if b[0] == protoEnd {
+		//	return string(buf), nil
+		//}
 	}
 }
+
+
 
 // A control protocol line.
 type control struct {
@@ -2193,7 +2213,6 @@ func (nc *Conn) doReconnect(err error) {
 		cur.reconnects++
 
 		// Try to create a new connection
-		//err = nc.createConn()
 		err = nc.createSctpConn()
 
 		// Not yet connected, retry...
