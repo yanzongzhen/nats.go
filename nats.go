@@ -1444,6 +1444,7 @@ func (nc *Conn) createSctpConn() (err error) {
 		addrs, _ := net.LookupHost(u.Hostname())
 		for _, addr := range addrs {
 			for _, i := range strings.Split(addr, ",") {
+				i := net.JoinHostPort(i, u.Port())
 				if a, err := net.ResolveUDPAddr("udp", i); err == nil {
 					hosts = append(hosts, *a)
 				} else {
