@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nats-io/nats.go/sctp"
-	"github.com/nats-io/nats.go/sctpinner"
 	"io"
 	"io/ioutil"
 	"log"
@@ -1494,86 +1493,6 @@ func (nc *Conn) createSctpConn() (err error) {
 	nc.bw = nc.newBuffer()
 	return nil
 }
-
-
-
-func (nc *Conn) createSctpInnerConn() (err error) {
-	if nc.Opts.Timeout < 0 {
-		return ErrBadTimeout
-	}
-	if _, cur := nc.currentServer(); cur == nil {
-		return ErrNoServers
-	}
-
-	var hosts []*sctpinner.SCTPAddr
-	u := nc.current.url
-
-	if net.ParseIP(u.Hostname()) == nil {
-		addrs, _ := net.LookupHost(u.Hostname())
-		for _, addr := range addrs {
-			port, _ := strconv.ParseInt(u.Port(), 10, 16)
-			var ips []net.IPAddr
-			for _, i := range strings.Split(addr, ",") {
-				if a, err := net.ResolveIPAddr("ip", i); err == nil {
-					log.Printf("Resolved address '%s' to %s", i, a)
-					ips = append(ips, *a)
-				} else {
-					log.Printf("Error resolving address '%s': %v", i, err)
-				}
-			}
-			tmp := &sctpinner.SCTPAddr{IPAddrs: ips, Port: int(port)}
-			hosts = append(hosts, tmp)
-		}
-	}
-	// Fall back to what we were given.
-	if len(hosts) == 0 {
-		port, _ := strconv.ParseInt(u.Port(), 10, 16)
-		var ips []net.IPAddr
-		if a, err := net.ResolveIPAddr("ip", u.Hostname()); err == nil {
-			log.Printf("Resolved address '%s' to %s", u, a)
-			ips = append(ips, *a)
-		} else {
-			log.Printf("Error resolving address '%s': %v", u, err)
-		}
-		tmp := &sctpinner.SCTPAddr{IPAddrs: ips, Port: int(port)}
-		hosts = append(hosts, tmp)
-	}
-
-	// CustomDialer takes precedence. If not set, use Opts.Dialer which
-	// is set to a default *net.Dialer (in Connect()) if not explicitly
-	// set by the user.
-	dialer := nc.Opts.CustomDialer
-	if dialer == nil {
-		// We will copy and shorten the timeout if we have multiple hosts to try.
-		copyDialer := *nc.Opts.Dialer
-		copyDialer.Timeout = copyDialer.Timeout / time.Duration(len(hosts))
-		dialer = &copyDialer
-	}
-
-	if len(hosts) > 1 && !nc.Opts.NoRandomize {
-		rand.Shuffle(len(hosts), func(i, j int) {
-			hosts[i], hosts[j] = hosts[j], hosts[i]
-		})
-	}
-	for _, host := range hosts {
-		nc.conn, err = sctpinner.DialSCTP("sctp", nil, host)
-		//nc.conn, err = dialer.Dial("tcp", host)
-		if err == nil {
-			break
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	if nc.pending != nil && nc.bw != nil {
-		// Move to pending buffer.
-		nc.bw.Flush()
-	}
-	nc.bw = nc.newBuffer()
-	return nil
-}
-
 
 
 // makeTLSConn will wrap an existing Conn using TLS
