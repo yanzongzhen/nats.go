@@ -44,6 +44,7 @@ github.com/pion/logging v0.2.2/go.mod h1:k0/tDVsRCX2Mb2ZEmTqNa7CWsQPc+YYCB7Q+5pa
 github.com/pion/randutil v0.1.0 h1:CFG1UdESneORglEsnimhUjf33Rwjubwj6xfiOXBa3mA=
 github.com/pion/randutil v0.1.0/go.mod h1:XcJrSMMbbMRhASFVOlj/5hQial/Y8oH/HVo7TBZq+j8=
 github.com/pion/sctp v1.7.0/go.mod h1:HlTD+15FeLYYQTTDO35uKEeRLVq5L2AY/ef6ZSvpIXc=
+github.com/pion/sctp v1.7.9/go.mod h1:EhpTUQu1/lcK3xI+eriS6/96fWetHGCvBi9MSsnaBN0=
 github.com/pion/transport v0.8.9/go.mod h1:lpeSM6KJFejVtZf8k0fgeN7zE73APQpTF83WvA1FVP8=
 github.com/pion/transport v0.10.0 h1:9M12BSneJm6ggGhJyWpDveFOstJsTiQjkLf4M44rm80=
 github.com/pion/transport v0.10.0/go.mod h1:BnHnUipd0rZQyTVB2SBGojFHT9CBt5C5TcsJSQGkvSE=
@@ -66,6 +67,10 @@ github.com/yanzongzhen/sctp v0.0.0-20200903040732-c01fcf136f59 h1:+KwUsRdv8qjUlB
 github.com/yanzongzhen/sctp v0.0.0-20200903040732-c01fcf136f59/go.mod h1:pUr6vOIMVWAzBJlPxasbY5XPKwmT+KyVHb4tj5DLt2Q=
 github.com/yanzongzhen/sctp v1.8.0 h1:/BEmRf+1jYIdjE3cNl4Y6hrU3EqvyEK5jyg2jfpMZ1Q=
 github.com/yanzongzhen/sctp v1.8.0/go.mod h1:pUr6vOIMVWAzBJlPxasbY5XPKwmT+KyVHb4tj5DLt2Q=
+github.com/yanzongzhen/sctp v1.8.1 h1:5G8tqRSAXZfXE5Vb2JLrnBSXTuGOYyQ++6dpndJ2mVE=
+github.com/yanzongzhen/sctp v1.8.1/go.mod h1:D9RSy19l9T2ysno9FkflwH3w4mKJQeUmrVzIbuhoxE8=
+github.com/yanzongzhen/sctp v1.8.2 h1:y+xeN1yW0KSch9NrLdKtB3HPowVFve4DbrXGjhgF5Ck=
+github.com/yanzongzhen/sctp v1.8.2/go.mod h1:D9RSy19l9T2ysno9FkflwH3w4mKJQeUmrVzIbuhoxE8=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59 h1:3zb4D3T4G8jdExgVU/95+vQXfpEPiMdCaZgmGVxjNHM=

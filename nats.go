@@ -1476,9 +1476,11 @@ func (nc *Conn) createSctpConn() (err error) {
 			hosts[i], hosts[j] = hosts[j], hosts[i]
 		})
 	}
-	CustomDialer := sctp.NewDialer(true, sctp.ReliabilityTypeReliable, 0)
 	for _, host := range hosts {
-		nc.conn, err = CustomDialer.Dial("udp", &host, 0)
+		rand.Seed(time.Now().UnixNano())
+		streamIdentifier := uint16(rand.Intn(65535))
+		log.Println(streamIdentifier)
+		nc.conn, err = sctp.Dial("udp", &host, streamIdentifier)
 		if err == nil {
 			break
 		}
