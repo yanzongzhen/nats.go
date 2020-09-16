@@ -61,7 +61,7 @@ func main() {
 	}
 
 	// Connect Options.
-	opts := []nats.Option{nats.Name("NATS Sample Subscriber")}
+	opts := []nats.Option{nats.Name("NATS Sample Subscriber"), nats.Sctp(true)}
 	opts = setupConnOptions(opts)
 
 	// Use UserCredentials
@@ -74,6 +74,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer nc.Close()
 
 	subj, i := args[0], 0
 

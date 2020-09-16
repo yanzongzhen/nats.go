@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// Connect Options.
-	opts := []nats.Option{nats.Name("NATS Sample Publisher")}
+	opts := []nats.Option{nats.Name("NATS Sample Publisher"), nats.Sctp(true)}
 
 	// Use UserCredentials
 	if *userCreds != "" {
@@ -74,8 +74,7 @@ func main() {
 	if reply != nil && *reply != "" {
 		nc.PublishRequest(subj, *reply, msg)
 	} else {
-		err := nc.Publish(subj, msg)
-		log.Print(err)
+		_ = nc.Publish(subj, msg)
 	}
 
 	nc.Flush()

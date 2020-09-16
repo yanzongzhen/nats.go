@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/yanzongzhen/sctp"
 	"io"
 	"io/ioutil"
 	"log"
@@ -40,6 +39,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/yanzongzhen/sctp"
 
 	"github.com/nats-io/nats.go/util"
 	"github.com/nats-io/nkeys"
@@ -256,6 +257,9 @@ type Options struct {
 	// Secure enables TLS secure connections that skip server
 	// verification by default. NOT RECOMMENDED.
 	Secure bool
+
+	// IS SCTP
+	Sctp bool
 
 	// TLSConfig is a custom TLS configuration to use for secure
 	// transports.
@@ -646,6 +650,14 @@ func Connect(url string, options ...Option) (*Conn, error) {
 func Name(name string) Option {
 	return func(o *Options) error {
 		o.Name = name
+		return nil
+	}
+}
+
+// Sctp is an Option to set the client protocol.
+func Sctp(s bool) Option {
+	return func(o *Options) error {
+		o.Sctp = s
 		return nil
 	}
 }
@@ -1477,9 +1489,7 @@ func (nc *Conn) createSctpConn() (err error) {
 		})
 	}
 	for _, host := range hosts {
-		rand.Seed(time.Now().UnixNano())
 		streamIdentifier := uint16(rand.Intn(65535))
-		log.Println(streamIdentifier)
 		nc.conn, err = sctp.Dial("udp", &host, streamIdentifier)
 		if err == nil {
 			break
@@ -1604,7 +1614,9 @@ func (nc *Conn) setup() {
 // Process a connected connection and initialize properly.
 func (nc *Conn) processConnectInit() error {
 	// to send connect
-	_ = nc.sendConnectInit()
+	if nc.Opts.Sctp {
+		_ = nc.sendConnectInit()
+	}
 
 	// Set our deadline for the whole connect process
 	_ = nc.conn.SetDeadline(time.Now().Add(nc.Opts.Timeout))
@@ -1648,6 +1660,12 @@ func (nc *Conn) processConnectInit() error {
 // Main connect function. Will connect to the nats-server
 func (nc *Conn) connect() error {
 	var returnedErr error
+	var connectFunc func() error
+	if nc.Opts.Sctp {
+		connectFunc = nc.createSctpConn
+	} else {
+		connectFunc = nc.createConn
+	}
 
 	// Create actual socket connection
 	// For first connect we walk all servers in the pool and try
@@ -1660,7 +1678,7 @@ func (nc *Conn) connect() error {
 		nc.current = nc.srvPool[i]
 
 		//if err := nc.createConn(); err == nil {
-		if err := nc.createSctpConn(); err == nil {
+		if err := connectFunc(); err == nil {
 			// This was moved out of processConnectInit() because
 			// that function is now invoked from doReconnect() too.
 
@@ -2131,7 +2149,11 @@ func (nc *Conn) doReconnect(err error) {
 		cur.reconnects++
 
 		// Try to create a new connection
-		err = nc.createSctpConn()
+		if nc.Opts.Sctp {
+			err = nc.createSctpConn()
+		} else {
+			err = nc.createConn()
+		}
 
 		// Not yet connected, retry...
 		// Continue to hold the lock
