@@ -42,9 +42,9 @@ import (
 
 	"github.com/yanzongzhen/sctp"
 
-	"github.com/yanzongzhen/nats.go/util"
 	"github.com/nats-io/nkeys"
 	"github.com/nats-io/nuid"
+	"github.com/yanzongzhen/nats.go/util"
 )
 
 // Default Constants
@@ -605,22 +605,22 @@ const (
 )
 
 type connectInfo struct {
-	Verbose      bool   `json:"verbose"`
-	Pedantic     bool   `json:"pedantic"`
-	UserJWT      string `json:"jwt,omitempty"`
-	Nkey         string `json:"nkey,omitempty"`
-	Signature    string `json:"sig,omitempty"`
-	User         string `json:"user,omitempty"`
-	Pass         string `json:"pass,omitempty"`
-	Token        string `json:"auth_token,omitempty"`
-	TLS          bool   `json:"tls_required"`
-	Name         string `json:"name"`
-	Lang         string `json:"lang"`
-	Version      string `json:"version"`
-	Protocol     int    `json:"protocol"`
-	Echo         bool   `json:"echo"`
-	Headers      bool   `json:"headers"`
-	NoResponders bool   `json:"no_responders"`
+	Verbose   bool   `json:"verbose"`
+	Pedantic  bool   `json:"pedantic"`
+	UserJWT   string `json:"jwt,omitempty"`
+	Nkey      string `json:"nkey,omitempty"`
+	Signature string `json:"sig,omitempty"`
+	User      string `json:"user,omitempty"`
+	Pass      string `json:"pass,omitempty"`
+	Token     string `json:"auth_token,omitempty"`
+	TLS       bool   `json:"tls_required"`
+	Name      string `json:"name"`
+	Lang      string `json:"lang"`
+	Version   string `json:"version"`
+	Protocol  int    `json:"protocol"`
+	Echo      bool   `json:"echo"`
+	// Headers      bool   `json:"headers"`
+	// NoResponders bool   `json:"no_responders"`
 }
 
 // MsgHandler is a callback function that processes messages delivered to
@@ -1852,9 +1852,9 @@ func (nc *Conn) connectProto() (string, error) {
 	}
 
 	// If our server does not support headers then we can't do them or no responders.
-	hdrs := nc.info.Headers
+	// hdrs := nc.info.Headers
 	cinfo := connectInfo{o.Verbose, o.Pedantic, ujwt, nkey, sig, user, pass, token,
-		o.Secure, o.Name, LangString, Version, clientProtoInfo, !o.NoEcho, hdrs, hdrs}
+		o.Secure, o.Name, LangString, Version, clientProtoInfo, !o.NoEcho}
 
 	b, err := json.Marshal(cinfo)
 	if err != nil {
