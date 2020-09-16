@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	natsserver "github.com/nats-io/nats-server/v2/test"
-	"github.com/nats-io/nats.go"
+	natsserver "github.com/yanzongzhen/nats-server/test"
+	"github.com/yanzongzhen/nats.go"
 )
 
 func TestBasicHeaders(t *testing.T) {

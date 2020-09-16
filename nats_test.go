@@ -36,8 +36,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats-server/v2/server"
-	natsserver "github.com/nats-io/nats-server/v2/test"
+	"github.com/yanzongzhen/nats-server/server"
+	natsserver "github.com/yanzongzhen/nats-server/test"
 	"github.com/nats-io/nkeys"
 )
 

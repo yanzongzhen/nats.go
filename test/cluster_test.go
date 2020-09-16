@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats-server/v2/server"
-	"github.com/nats-io/nats-server/v2/test"
-	"github.com/nats-io/nats.go"
+	"github.com/yanzongzhen/nats-server/server"
+	"github.com/yanzongzhen/nats-server/test"
+	"github.com/yanzongzhen/nats.go"
 )
 
 var testServers = []string{

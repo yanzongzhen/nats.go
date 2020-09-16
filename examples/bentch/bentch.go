@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/nats-io/nats.go"
+	"github.com/yanzongzhen/nats.go"
 	"log"
 	"runtime"
 	"time"

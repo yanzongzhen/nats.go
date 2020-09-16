@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nats-io/nats-server/v2/server"
-	"github.com/nats-io/nats.go"
+	"github.com/yanzongzhen/nats-server/server"
+	"github.com/yanzongzhen/nats.go"
 
-	natsserver "github.com/nats-io/nats-server/v2/test"
+	natsserver "github.com/yanzongzhen/nats-server/test"
 )
 
 // So that we can pass tests and benchmarks...

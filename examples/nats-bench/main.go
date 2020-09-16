@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nats.go/bench"
+	"github.com/yanzongzhen/nats.go"
+	"github.com/yanzongzhen/nats.go/bench"
 )
 
 // Some sane defaults

@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nats-io/nats.go"
+	"github.com/yanzongzhen/nats.go"
 )
 
 // Shows different ways to create a Conn
